@@ -1,4 +1,3 @@
-# fachada.py
 from typing import List, Optional, Union, Tuple
 from avl import AVLTreeAdj
 from rb import RBTreeAdj
@@ -14,7 +13,7 @@ class EstruturaArvore:
             self.tree = RBTreeAdj()
         elif tipo == "234":
             self.tree = Tree234()
-        elif tipo == "KDT":  # <--- NOVO TIPO
+        elif tipo == "KDT": 
             self.tree = KDTree()
         else:
             raise ValueError("Tipo desconhecido")
@@ -32,19 +31,15 @@ class EstruturaArvore:
         return self.tree.search(key)
 
     def buscar_caminho_binaria(self, key) -> List[int]:
-        # Funciona para AVL, RB e KD (KD é binária estruturalmente)
         caminho = []
         if self.tipo in ("AVL", "RB", "KDT"):
             cur = self.tree.root
             while cur is not None:
                 caminho.append(cur)
                 node = self.tree.nodes[cur]
-                
-                # Adaptação para KD (chave é tupla) vs Outras (int)
                 if self.tipo == "KDT":
                      val_node = node.point
                      val_busca = key
-                     # Lógica KD
                      if val_node == val_busca:
                          break
                      axis = node.axis
@@ -53,13 +48,12 @@ class EstruturaArvore:
                      else:
                          cur = self.tree._get_right(cur)
                 else:
-                    # Lógica AVL/RB
                     if key == node.key: break
                     elif key < node.key: cur = (self.tree._left(cur) if self.tipo=="RB" else self.tree._get_left(cur))
                     else: cur = (self.tree._right(cur) if self.tipo=="RB" else self.tree._get_right(cur))
         return caminho
     
-    # ... manter buscar_caminho_234 igual ...
+    
     def buscar_caminho_234(self, key: int) -> List[int]:
         ids = []
         if self.tipo != "234" or self.tree.root is None:

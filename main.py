@@ -21,7 +21,6 @@ class Jogo:
         self.fonte_pequena = pygame.font.SysFont("consolas", 11)
 
         self.ui = UIManager(self.tela, self.fonte_titulo, self.fonte_normal, self.fonte_pequena)
-
         try:
             bg = pygame.image.load("assets/background.png").convert()
             self.background = pygame.transform.scale(bg, (LARGURA, ALTURA))
@@ -31,6 +30,9 @@ class Jogo:
         self.game_state = "INTRO"
         self.fase = 1
         self.estrutura = EstruturaArvore("AVL")
+        
+        self.kdtree_memory = None 
+        
         self.msgs: List[str] = []
         self.mostrar_tutorial = True
 
@@ -60,25 +62,47 @@ class Jogo:
         print("LOG:", texto)
 
     def _carregar_demo_inicial(self):
-        # Fase 4 e 5 usam KDTree com tuplas
-        if self.fase in (4, 5):
-            for _ in range(12):
-                x = random.randint(5, 95)
-                y = random.randint(5, 95)
-                self.estrutura.inserir((x, y))
-            self._say("Dados espaciais (X, Y) carregados.")
-        else:
+        if self.fase in (1, 2, 3):
             valores = [50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45, 55, 65, 75, 85]
             for v in valores:
                 self.estrutura.inserir(v)
             self._say("Chaves numéricas carregadas.")
 
     def set_fase(self, f: int):
+        
+        if f in (4, 5):
+            self.fase = f
+            
+            if self.kdtree_memory is None:
+                self.estrutura = EstruturaArvore("KDT")
+                for _ in range(12):
+                    x = random.randint(5, 95)
+                    y = random.randint(5, 95)
+                    self.estrutura.inserir((x, y))
+                self.kdtree_memory = self.estrutura 
+                self._say("Nova KD-Tree gerada e salva na memória.")
+            else:
+        
+                self.estrutura = self.kdtree_memory
+        
+            
+        
+            self.selected_id = None
+            self.selected_key = None
+            self.path_destacado = []
+            
+            vis_nome = "Hierarquia" if f == 4 else "Plano 2D"
+            self._say(f"Visualizando KD-Tree: {vis_nome}")
+            self.mostrar_tutorial = True
+            return
+
+        
         self.fase = f
-        # Mapeamento: 4 e 5 usam a mesma estrutura lógica 'KDT'
-        tipos = {1: "AVL", 2: "RB", 3: "234", 4: "KDT", 5: "KDT"}
+        tipos = {1: "AVL", 2: "RB", 3: "234"}
         
         self.estrutura = EstruturaArvore(tipos[f])
+        
+        
         self.selected_id = None
         self.selected_key = None
         self.path_destacado = []
@@ -122,6 +146,7 @@ class Jogo:
             val = (x, y)
             self.estrutura.inserir(val)
             self._say(f"Inserido ponto {val}.")
+            
         else:
             v = random.randint(1, 99)
             self.estrutura.inserir(v)
@@ -161,9 +186,9 @@ class Jogo:
 
     def _clique(self, pos):
         x, y = pos
-        self._atualizar_layout() # Garante que node_positions está atualizado para a fase atual
+        self._atualizar_layout()
         
-        # Lógica 2-3-4
+        
         if self.fase == 3:
             for nid, (nx, ny) in self.node_positions_234.items():
                 rect = pygame.Rect(nx - 25, ny - 15, 50, 30)
@@ -176,11 +201,12 @@ class Jogo:
                         self._say(f"Selecionado 2-3-4: {node.keys[0]}...")
                     return
             return
+
+        
         alvo = None
         menor = 999999
         for nid, (nx, ny) in self.node_positions.items():
             d = math.hypot(nx - x, ny - y)
-            # Na fase 5 os pontos são pequenos, aumenta a precisão do clique
             raio_clique = RAIO_NO + 5 if self.fase != 5 else 15 
             if d <= raio_clique and d < menor:
                 menor = d
@@ -207,7 +233,7 @@ class Jogo:
         self.node_positions = {}
         if self.estrutura.tree.root is None: return
 
-        # === LAYOUT HIERÁRQUICO (Fases 1, 2, 4) ===
+        
         if self.fase in (1, 2, 4):
             def layout_bin(nid, depth, x_min, x_max):
                 if nid is None: return
@@ -215,10 +241,10 @@ class Jogo:
                 y = 120 + depth * 80
                 self.node_positions[nid] = (x, y)
                 
-                if self.fase == 2: # RB
+                if self.fase == 2:
                     l = self.estrutura.tree._left(nid)
                     r = self.estrutura.tree._right(nid)
-                else: # AVL e KD
+                else:
                     l = self.estrutura.tree._get_left(nid)
                     r = self.estrutura.tree._get_right(nid)
 
@@ -227,10 +253,8 @@ class Jogo:
             
             layout_bin(self.estrutura.tree.root, 0, 50, LARGURA - 50)
 
-        # === LAYOUT ESPACIAL 2D (Fase 5) ===
+        
         elif self.fase == 5:
-            # Aqui mapeamos as coordenadas do DADO (0-100) para PIXELS da tela
-            # Isso permite que o clique funcione na fase 5
             MARGEM_X = 250
             MARGEM_Y = 150
             L_UTIL = LARGURA - 2 * MARGEM_X
@@ -251,7 +275,7 @@ class Jogo:
             
             mapear_todos(self.estrutura.tree.root)
 
-        # === LAYOUT 2-3-4 (Fase 3) ===
+        
         elif self.fase == 3:
              self.node_positions_234 = {}
              def layout_234(nid, depth, x_min, x_max):
@@ -276,12 +300,10 @@ class Jogo:
                     self.node_positions_234[nid] = (x, y)
              layout_234(self.estrutura.tree.root, 0, 80, LARGURA - 80)
 
-    # Função de desenho recursivo do plano (apenas linhas e fundo)
     def _draw_kdtree_lines(self, nid, x_min, y_min, x_max, y_max):
         if nid is None: return
         node = self.estrutura.tree.nodes[nid]
         
-        # Reutilizamos a lógica de conversão para consistência
         MARGEM_X = 250
         MARGEM_Y = 150
         L_UTIL = LARGURA - 2 * MARGEM_X
@@ -300,11 +322,11 @@ class Jogo:
         axis = node.axis
         cor = COR_EIXO_X if axis == 0 else COR_EIXO_Y
         
-        if axis == 0: # Corte Vertical
+        if axis == 0: 
             pygame.draw.line(self.tela, cor, (sx, s_ymin), (sx, s_ymax), 2)
             self._draw_kdtree_lines(self.estrutura.tree.adj[nid][0], x_min, y_min, px, y_max)
             self._draw_kdtree_lines(self.estrutura.tree.adj[nid][1], px, y_min, x_max, y_max)
-        else: # Corte Horizontal
+        else:
             pygame.draw.line(self.tela, cor, (s_xmin, sy), (s_xmax, sy), 2)
             self._draw_kdtree_lines(self.estrutura.tree.adj[nid][0], x_min, y_min, x_max, py)
             self._draw_kdtree_lines(self.estrutura.tree.adj[nid][1], x_min, py, x_max, y_max)
@@ -321,9 +343,8 @@ class Jogo:
 
         self._atualizar_layout()
 
-        # === FASE 5: DESENHO DO PLANO 2D (Fundo + Linhas + Pontos) ===
+        
         if self.fase == 5:
-            # Fundo da área do gráfico
             MARGEM_X = 250
             MARGEM_Y = 150
             L_UTIL = LARGURA - 2 * MARGEM_X
@@ -336,10 +357,10 @@ class Jogo:
             self.tela.blit(s, rect_fundo.topleft)
             pygame.draw.rect(self.tela, CINZA, rect_fundo, 2)
 
-            # Linhas de corte
+            
             self._draw_kdtree_lines(self.estrutura.tree.root, 0, 0, 100, 100)
 
-            # Pontos (usando node_positions calculado no layout espacial)
+            
             for nid, (x, y) in self.node_positions.items():
                 if nid in self.path_destacado:
                     pygame.draw.circle(self.tela, AMARELO, (x, y), 8)
@@ -348,14 +369,13 @@ class Jogo:
                 
                 if self.selected_id == nid:
                     pygame.draw.circle(self.tela, VERDE, (x, y), 8, 2)
-                    # Mostrar coordenadas ao selecionar
-                    node = self.estrutura.tree.nodes[nid]
-                    txt = f"({node.point[0]}, {node.point[1]})"
-                    self.ui._draw_text(txt, x, y - 20, center_x=True)
 
-        # === FASES 1, 2, 4: DESENHO DA ÁRVORE (Hierarquia) ===
+                
+                node = self.estrutura.tree.nodes[nid]
+                txt = f"{node.point[0]},{node.point[1]}"
+                cor_texto = BRANCO if (nid == self.selected_id or nid in self.path_destacado) else CINZA_CLARO
+                self.ui._draw_text(txt, x, y - 12, center_x=True, font=self.fonte_pequena, color=cor_texto)
         elif self.fase in (1, 2, 4):
-            # Arestas
             for nid, (x, y) in self.node_positions.items():
                 if self.fase == 2:
                     l = self.estrutura.tree._left(nid)
@@ -369,11 +389,10 @@ class Jogo:
                         cx, cy = self.node_positions[child]
                         pygame.draw.line(self.tela, CINZA_CLARO, (x, y), (cx, cy), 2)
 
-            # Nós
             for nid, (x, y) in self.node_positions.items():
                 node = self.estrutura.tree.nodes[nid]
                 
-                cor = AZUL # Default AVL
+                cor = AZUL 
                 if self.fase == 2: cor = VERMELHO if node.color == RBColor.RED else PRETO
                 elif self.fase == 4: cor = COR_EIXO_X if node.axis == 0 else COR_EIXO_Y
 
@@ -386,7 +405,6 @@ class Jogo:
                 if self.selected_id == nid:
                     pygame.draw.circle(self.tela, VERDE, (x, y), RAIO_NO + 6, 2)
 
-                # Texto
                 if self.fase == 4:
                     txt = f"{node.point[0]},{node.point[1]}"
                     self.ui._draw_text(txt, x, y - 6, center_x=True, font=self.fonte_pequena)
@@ -395,7 +413,7 @@ class Jogo:
                     if getattr(node, 'freq', 1) > 1: txt += f"({node.freq})"
                     self.ui._draw_text(txt, x, y - 6, center_x=True)
 
-        # === FASE 3: 2-3-4 ===
+       
         elif self.fase == 3:
             for nid, (x, y) in self.node_positions_234.items():
                 node = self.estrutura.tree.nodes[nid]

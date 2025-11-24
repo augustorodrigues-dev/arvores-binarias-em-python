@@ -1,4 +1,3 @@
-# rb.py
 from typing import Dict, Optional, Tuple
 
 class RBColor:

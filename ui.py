@@ -1,4 +1,3 @@
-# ui.py
 import pygame
 from config import *
 
@@ -80,7 +79,7 @@ class UIManager:
                 "",
                 "CONTROLES:",
                 " • [I] Insere ponto.",
-                " • Clique nos pontos para ver suas coordenadas.",
+                " • Coordenadas são exibidas automaticamente.",
             ]
         }
 
