@@ -13,15 +13,14 @@ pip install -r requirements.txt
 
 ## Como Executar
 
-### Opção 1: Localhost (Recomendado)
+### Opção 1: Terminal (Recomendado)
 
 1. Na pasta onde está o projeto, rode no terminal:
 
 ```bash
-python -m jupyterlab
+python main.py
 ```
-2. Após a janela ser aberta no seu navegador, recomendamos ir em settings e mudar o tema para dark para melhor experiência
-3. Execute as células
+
 
 ### Opção 2: Google Colab (Online)
 
