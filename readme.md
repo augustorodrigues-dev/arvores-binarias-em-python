@@ -20,15 +20,3 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
-
-
-### Opção 2: Google Colab (Online)
-
-1. Acesse [colab.research.google.com](https://colab.research.google.com)
-2. Faça upload do arquivo `.ipynb`
-3. Execute as células
-
-### Opção 3: Visual Studio Code
-
-1. Abra a pasta do projeto no vscode e selecione o arquivo `main.ipynb`
-2. Execute as células com **Shift + Enter**
