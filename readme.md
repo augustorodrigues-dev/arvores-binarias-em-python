@@ -107,7 +107,7 @@ O projeto foi refatorado para garantir manutenibilidade e separação de conceit
 * **`game.py`**: O "coração" do jogo. Gerencia o loop principal, eventos de entrada (teclado/mouse) e estados.
 * **`ui.py`**: Responsável por desenhar textos, HUD, tutoriais e menus.
 * **`layout.py`**: Contém a matemática pura para calcular as coordenadas (X, Y) dos nós na tela.
-* **`fachada.py`** (TreeManager): Design Pattern *Facade*. Gerencia a troca dinâmica entre os tipos de árvores.
+* **`gerenciamento.py`** (TreeManager): Design Pattern *Facade*. Gerencia a troca dinâmica entre os tipos de árvores.
 * **`config.py`**: Constantes globais (Cores, Resolução, Listas de Dados).
 * **Implementações das Árvores:**
     * `avl.py`, `rb.py`, `t234.py`, `kd.py`, `splay.py`.
