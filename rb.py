@@ -82,7 +82,7 @@ class RBTreeAdj:
             parent = cur
             node = self.nodes[cur]
             
-            # --- ANIMAÇÃO DA DESCIDA ---
+           
             if key == node.key:
                 node.freq += 1; self._animate([cur], "Chave existente."); return
             elif key < node.key: 
@@ -91,7 +91,7 @@ class RBTreeAdj:
             else: 
                 self._animate([cur], f"{key} > {node.key} -> Dir")
                 cur = self._right(cur); dir_left = False
-            # ---------------------------
+            
 
         nid = self._new_node(key)
         if dir_left: self._set_left(parent, nid)

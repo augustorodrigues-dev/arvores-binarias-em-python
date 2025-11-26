@@ -2,7 +2,7 @@ from typing import Dict, Tuple, Optional
 from config import LARGURA, ALTURA
 
 def calcular_layout_binario(tree, root_id: int, fase: int) -> Dict[int, Tuple[int, int]]:
-    """Calcula posições para AVL, RB e KD-Tree (Visão Hierárquica)"""
+    """Calcula posições para AVL, RB, Splay e KD-Tree (Visão Hierárquica)"""
     positions = {}
     if root_id is None: 
         return positions
@@ -15,11 +15,11 @@ def calcular_layout_binario(tree, root_id: int, fase: int) -> Dict[int, Tuple[in
         y = 120 + depth * 80
         positions[nid] = (x, y)
         
-        
-        if hasattr(tree, '_get_left'):
+        # Abstração para pegar filhos
+        if hasattr(tree, '_get_left'): # AVL, KD, Splay
             l = tree._get_left(nid)
             r = tree._get_right(nid)
-        else: 
+        else: # RB (usa nomenclatura _left / _right)
             l = tree._left(nid)
             r = tree._right(nid)
 
@@ -47,13 +47,12 @@ def calcular_layout_kd_espacial(tree, root_id: int) -> Dict[int, Tuple[int, int]
         node = tree.nodes[nid]
         px, py = node.point
         
-        
         sx = OFFSET_X + (px / 100) * L_UTIL
         sy = OFFSET_Y + (py / 100) * A_UTIL
         positions[nid] = (int(sx), int(sy))
         
-        _recursive(tree.adj[nid][0]) 
-        _recursive(tree.adj[nid][1]) 
+        _recursive(tree.adj[nid][0]) # Esquerda
+        _recursive(tree.adj[nid][1]) # Direita
 
     _recursive(root_id)
     return positions

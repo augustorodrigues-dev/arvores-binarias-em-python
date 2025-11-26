@@ -5,19 +5,18 @@ import math
 import time
 from typing import Dict, Optional, Tuple, List, Callable
 
-
 from config import *
 from ui import UIManager
-from fachada import EstruturaArvore
+from gerenciador import EstruturaArvore
 from rb import RBColor
-import layout 
+import layout
 
 COR_DESTAQUE_OPERACAO = (255, 165, 0) 
 
 class Jogo:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("Helldivers: Árvores da Super-Terra - Modular")
+        pygame.display.set_caption("Helldivers: Árvores da Super-Terra - Visualizador Avançado")
         self.tela = pygame.display.set_mode((LARGURA, ALTURA))
         self.clock = pygame.time.Clock()
 
@@ -38,9 +37,10 @@ class Jogo:
         self.intro_text = [
             "> Conexão estabelecida.",
             "> Bem-vindo, Helldiver.",
-            "> Sistema Modularizado V2.0",
-            "> [A] Auto | [F] Fast Fill | [M] Mix | [R] Reset",
+            "> Controles Avançados Habilitados:",
+            "> [A] Auto | [F] Turbo | [M] Mix | [R] Reset",
             "> [I] Inserir | [X] Remover | [B] Buscar",
+            "> [1-6] Selecionar Fase",
             "> Pela Democracia Gerenciada!"
         ]
         self.typed_chars = 0
@@ -55,7 +55,6 @@ class Jogo:
         self.selected_id: Optional[int] = None
         self.selected_key = None 
         self.path_destacado: List[int] = []
-        
         self.node_positions: Dict[int, Tuple[int, int]] = {}
         
         self.auto_inserindo = False
@@ -81,7 +80,7 @@ class Jogo:
         if self.turbo_mode:
             time.sleep(0.05) 
         else:
-            tempo = 0.5 if self.auto_inserindo else 1.2
+            tempo = 1.5 if self.auto_inserindo else 1.2
             time.sleep(tempo)
         
         self.animating_nodes = []
@@ -127,12 +126,14 @@ class Jogo:
             self.memoria_fases['KDT'] = self.estrutura
         else:
             self.fila_normal = list(LISTA_DEMO)
-            tipos = {1: "AVL", 2: "RB", 3: "234"}
-            self.estrutura = EstruturaArvore(tipos[self.fase], self._animar_passo_tree)
-            if self.fila_normal:
-                self.estrutura.inserir(self.fila_normal[0])
-                self.indice_demo = 1
-            self.memoria_fases[self.fase] = self.estrutura
+            tipos = {1: "AVL", 2: "RB", 3: "234", 6: "SPLAY"}
+            
+            if self.fase in tipos:
+                self.estrutura = EstruturaArvore(tipos[self.fase], self._animar_passo_tree)
+                if self.fila_normal:
+                    self.estrutura.inserir(self.fila_normal[0])
+                    self.indice_demo = 1
+                self.memoria_fases[self.fase] = self.estrutura
 
     def _misturar_fila(self):
         fila = self._get_fila_atual()
@@ -174,14 +175,15 @@ class Jogo:
             return
 
         if f not in self.memoria_fases:
-            tipos = {1: "AVL", 2: "RB", 3: "234"}
-            self.estrutura = EstruturaArvore(tipos[f], self._animar_passo_tree)
-            self.estrutura = self.estrutura
-            if self.fila_normal:
-                self.estrutura.inserir(self.fila_normal[0])
-                self.indice_demo = 1
-            self.memoria_fases[f] = self.estrutura 
-            self._say(f"Fase {f} iniciada.")
+            tipos = {1: "AVL", 2: "RB", 3: "234", 6: "SPLAY"}
+            if f in tipos:
+                self.estrutura = EstruturaArvore(tipos[f], self._animar_passo_tree)
+                self.estrutura = self.estrutura
+                if self.fila_normal:
+                    self.estrutura.inserir(self.fila_normal[0])
+                    self.indice_demo = 1
+                self.memoria_fases[f] = self.estrutura 
+                self._say(f"Fase {f} iniciada.")
         else:
             self.estrutura = self.memoria_fases[f]
             self.indice_demo = len(self.estrutura.tree.nodes) if self.estrutura.tree.root else 0
@@ -205,6 +207,7 @@ class Jogo:
                 elif ev.key == pygame.K_3: self.set_fase(3)
                 elif ev.key == pygame.K_4: self.set_fase(4)
                 elif ev.key == pygame.K_5: self.set_fase(5)
+                elif ev.key == pygame.K_6: self.set_fase(6)
                 elif ev.key == pygame.K_t: self.mostrar_tutorial = True
                 elif ev.key == pygame.K_i: self._acao_inserir_manual()
                 elif ev.key == pygame.K_x: self._acao_remover()
@@ -310,7 +313,7 @@ class Jogo:
             self.node_positions = {}
             return
 
-        if self.fase in (1, 2, 4):
+        if self.fase in (1, 2, 4, 6):
             self.node_positions = layout.calcular_layout_binario(self.estrutura.tree, self.estrutura.tree.root, self.fase)
         elif self.fase == 5:
             self.node_positions = layout.calcular_layout_kd_espacial(self.estrutura.tree, self.estrutura.tree.root)
@@ -338,7 +341,6 @@ class Jogo:
             self._draw_kdtree_lines(self.estrutura.tree.adj[nid][1], x_min, py, x_max, y_max)
 
     def _draw_lista_demo(self):
-       
         y_pos = ALTURA - 30; start_x = 20
         self.ui._draw_text("FILA:", start_x, y_pos - 5, font=self.fonte_pequena, color=AMARELO)
         start_x += 40
@@ -367,6 +369,8 @@ class Jogo:
             self.ui.draw_intro(self.typed_chars, self.intro_text); pygame.display.flip(); return
         
         self._atualizar_layout()
+        
+        # --- DRAW DA ÁRVORE ---
         if self.fase == 5:
             MARGEM_X = 250; MARGEM_Y = 150
             L_UTIL = LARGURA - 2 * MARGEM_X; A_UTIL = ALTURA - MARGEM_Y - 50
@@ -383,7 +387,7 @@ class Jogo:
                 cor = BRANCO if (nid == self.selected_id or nid in self.path_destacado) else CINZA_CLARO
                 self.ui._draw_text(txt, x, y - 12, center_x=True, font=self.fonte_pequena, color=cor)
         
-        elif self.fase in (1, 2, 4):
+        elif self.fase in (1, 2, 4, 6):
             for nid, (x, y) in self.node_positions.items():
                 if self.fase == 2: l, r = self.estrutura.tree._left(nid), self.estrutura.tree._right(nid)
                 else:
@@ -399,6 +403,8 @@ class Jogo:
                 if self.fase == 2: cor = VERMELHO if node.color == RBColor.RED else PRETO
                 elif self.fase == 4: 
                     if hasattr(node, 'axis'): cor = COR_EIXO_X if node.axis == 0 else COR_EIXO_Y
+                elif self.fase == 6: cor = AZUL
+                
                 if nid in self.animating_nodes: pygame.draw.circle(self.tela, COR_DESTAQUE_OPERACAO, (x, y), RAIO_NO + 8)
                 if nid in self.path_destacado: pygame.draw.circle(self.tela, AMARELO, (x, y), RAIO_NO + 4)
                 pygame.draw.circle(self.tela, cor, (x, y), RAIO_NO)
