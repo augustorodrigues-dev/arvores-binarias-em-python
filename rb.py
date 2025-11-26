@@ -25,21 +25,17 @@ class RBTreeAdj:
             if valid_nodes: self.anim_cb(valid_nodes, msg)
 
     def _new_node(self, key: int) -> int:
-        nid = self._next_id
-        self._next_id += 1
-        self.nodes[nid] = RBNode(key)
-        self.adj[nid] = (None, None)
-        self.parent[nid] = None
+        nid = self._next_id; self._next_id += 1
+        self.nodes[nid] = RBNode(key); self.adj[nid] = (None, None); self.parent[nid] = None
         return nid
-
     def _left(self, nid: int) -> Optional[int]: return self.adj[nid][0]
     def _right(self, nid: int) -> Optional[int]: return self.adj[nid][1]
     def _set_left(self, nid: int, child: Optional[int]) -> None:
         _, r = self.adj[nid]; self.adj[nid] = (child, r)
-        if child is not None: self.parent[child] = nid
+        if child: self.parent[child] = nid
     def _set_right(self, nid: int, child: Optional[int]) -> None:
         l, _ = self.adj[nid]; self.adj[nid] = (l, child)
-        if child is not None: self.parent[child] = nid
+        if child: self.parent[child] = nid
     def _grandparent(self, nid: int) -> Optional[int]:
         p = self.parent.get(nid)
         return None if p is None else self.parent.get(p)
@@ -73,6 +69,7 @@ class RBTreeAdj:
         self._set_right(x, y)
 
     def insert(self, key: int) -> None:
+        self._animate([], f"Iniciando inserção de vértice {key}")
         if self.root is None:
             nid = self._new_node(key)
             self.root = nid
@@ -84,10 +81,17 @@ class RBTreeAdj:
         while cur is not None:
             parent = cur
             node = self.nodes[cur]
+            
+            # --- ANIMAÇÃO DA DESCIDA ---
             if key == node.key:
-                node.freq += 1; self._animate([cur], "Chave existente. Frequência++"); return
-            elif key < node.key: cur = self._left(cur); dir_left = True
-            else: cur = self._right(cur); dir_left = False
+                node.freq += 1; self._animate([cur], "Chave existente."); return
+            elif key < node.key: 
+                self._animate([cur], f"{key} < {node.key} -> Esq")
+                cur = self._left(cur); dir_left = True
+            else: 
+                self._animate([cur], f"{key} > {node.key} -> Dir")
+                cur = self._right(cur); dir_left = False
+            # ---------------------------
 
         nid = self._new_node(key)
         if dir_left: self._set_left(parent, nid)
@@ -149,11 +153,48 @@ class RBTreeAdj:
             self._animate([self.root], "Garantindo Raiz Preta.")
             self.nodes[self.root].color = RBColor.BLACK
     
-    def search(self, key: int) -> Optional[int]:
+    def search_step_by_step(self, key: int) -> List[int]:
+        path = []
         cur = self.root
         while cur is not None:
+            path.append(cur)
             node = self.nodes[cur]
-            if key == node.key: return cur
-            elif key < node.key: cur = self._left(cur)
-            else: cur = self._right(cur)
-        return None
+            self._animate([cur], f"Visitando {node.key}...")
+            if key == node.key:
+                self._animate([cur], f"Encontrado {key}!")
+                return path
+            elif key < node.key:
+                cur = self._left(cur)
+            else:
+                cur = self._right(cur)
+        self._animate([], "Nó não encontrado.")
+        return []
+
+    def remove(self, key: int):
+        self.root = self._remove_rec(self.root, key)
+
+    def _min_value_node(self, nid: int) -> int:
+        cur = nid
+        while self._left(cur) is not None: cur = self._left(cur)
+        return cur
+
+    def _remove_rec(self, nid: Optional[int], key: int) -> Optional[int]:
+        if nid is None: return None
+        node = self.nodes[nid]
+        
+        if key < node.key:
+            self._set_left(nid, self._remove_rec(self._left(nid), key))
+        elif key > node.key:
+            self._set_right(nid, self._remove_rec(self._right(nid), key))
+        else:
+            self._animate([nid], f"Removendo {key}...")
+            left = self._left(nid)
+            right = self._right(nid)
+            if left is None: return right
+            elif right is None: return left
+            succ_id = self._min_value_node(right)
+            succ_node = self.nodes[succ_id]
+            node.key = succ_node.key
+            self._animate([nid, succ_id], f"Substituído por sucessor {succ_node.key}")
+            self._set_right(nid, self._remove_rec(right, succ_node.key))
+        return nid

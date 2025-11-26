@@ -21,65 +21,44 @@ class UIManager:
             1: [
                 "FASE 1: ÁRVORE AVL",
                 "",
-                "CONCEITO: Árvore Binária de Busca com balanceamento por altura.",
-                "Toda inserção/remoção é seguida de rotações para manter |FB| <= 1.",
+                "CONCEITO: Balanceamento por altura.",
+                "Mantém a diferença de altura entre subárvores no máx 1.",
                 "",
-                "CONTROLES:",
-                " • [I] Insere valor aleatório.",
-                " • Clique em um nó para selecioná-lo.",
-                " • [X] Remove a chave do nó selecionado.",
-                " • [B] Destaca o caminho de busca.",
+                "CONTROLES AVANÇADOS:",
+                " • [A] Iniciar Auto-Inserção (Fila).",
+                " • [I] Inserir 1 item da Fila.",
+                " • [Espaço] Pausar inserção.",
+                " • [R] Resetar tudo.",
             ],
             2: [
                 "FASE 2: ÁRVORE RUBRO-NEGRA",
                 "",
-                "CONCEITO: Balanceamento por cores (Vermelho/Preto).",
-                "Garante que nenhum caminho seja muito mais longo que outro.",
+                "CONCEITO: Balanceamento por cores.",
+                "Nenhum caminho é mais que 2x mais longo que outro.",
                 "",
                 "CONTROLES:",
-                " • [I] Insere valor aleatório.",
-                " • Clique para selecionar.",
-                " • [B] Caminho de busca.",
+                " • [A] Iniciar Auto-Inserção (Fila).",
+                " • [I] Inserir 1 item da Fila.",
+                " • [Espaço] Pausar inserção.",
+                " • [R] Resetar tudo.",
             ],
             3: [
                 "FASE 3: ÁRVORE 2-3-4",
                 "",
-                "CONCEITO: Árvore multi-way (Nós podem ter 1, 2 ou 3 chaves).",
-                "Cresce 'para cima' dividindo nós cheios.",
-                "",
-                "CONTROLES:",
-                " • [I] Insere valor.",
-                " • Clique para selecionar.",
-                " • [B] Busca.",
+                "CONCEITO: Árvore Multi-way (B-Tree ordem 4).",
+                "Nós podem ter até 3 chaves e 4 filhos.",
+                "Cresce para cima (splits).",
             ],
             4: [
                 "FASE 4: KD-TREE (VISÃO HIERÁRQUICA)",
                 "",
-                "CONCEITO: Visualização da ESTRUTURA da árvore k-dimensional.",
-                "Observe como a profundidade aumenta conforme inserimos pontos.",
-                "Nós pares cortam X (Vermelho), Ímpares cortam Y (Azul).",
-                "",
-                "Esta visão ignora a posição espacial real para focar",
-                "nas relações pai-filho.",
-                "",
-                "CONTROLES:",
-                " • [I] Insere ponto (X, Y).",
-                " • [B] Busca ponto.",
+                "CONCEITO: Árvore para dados multidimensionais.",
+                "Alterna eixos (X, Y) a cada nível.",
             ],
             5: [
                 "FASE 5: KD-TREE (VISÃO ESPACIAL 2D)",
                 "",
-                "CONCEITO: Visualização do ESPAÇO particionado.",
-                "Aqui vemos onde os pontos realmente estão no plano 2D.",
-                "",
-                " • Linhas Vermelhas: Cortes verticais (Eixo X).",
-                " • Linhas Azuis: Cortes horizontais (Eixo Y).",
-                "",
-                "Cada linha divide a região atual em duas novas regiões.",
-                "",
-                "CONTROLES:",
-                " • [I] Insere ponto.",
-                " • Coordenadas são exibidas automaticamente.",
+                "Visualização geométrica dos cortes no plano.",
             ]
         }
 
@@ -115,10 +94,13 @@ class UIManager:
                             LARGURA / 2, ALTURA - 60, color=AMARELO, center_x=True)
 
     def draw_hud(self, fase, msgs):
+        
         panel_surf = pygame.Surface((LARGURA, 80))
         panel_surf.set_alpha(COR_PAINEL[3])
         panel_surf.fill(COR_PAINEL[:3])
         self.tela.blit(panel_surf, (0, 0))
+        
+        
         pygame.draw.line(self.tela, AMARELO, (0, 80), (LARGURA, 80), 2)
 
         fase_nomes = {
@@ -129,17 +111,28 @@ class UIManager:
             5: "KD-Tree (Plano 2D)"
         }
         
+        
         titulo = "HELLDIVERS: OPERAÇÃO ÁRVORES | FASE %d: %s" % (fase, fase_nomes.get(fase, "Desconhecida"))
         self._draw_text(titulo, 20, 15, font=self.fonte_titulo)
         
-        controles = "[1-5] Fase | [I] Inserir | [X] Remover | [B] Buscar | [T] Tutorial"
-        self._draw_text(controles, 20, 50)
+        
+        controles = "[1-5] Fase | [M] Misturar | [I] Inserir  | [A] Auto Inserção | [F] Preencher | [B] Buscar | [X] Remover | [R] Reset | [ESPAÇO] Stop"
+        self._draw_text(controles, 20, 50, color=CINZA_CLARO, font=self.fonte_pequena)
 
+        
         if msgs:
             last_msg = msgs[-1]
-            surf = self.fonte_normal.render("LOG: " + last_msg, True, BRANCO)
-            rect = surf.get_rect(topright=(LARGURA - 20, 50))
-            self.tela.blit(surf, rect)
+            
+            txt_surf = self.fonte_normal.render("LOG: " + last_msg, True, BRANCO)
+            bg_rect = txt_surf.get_rect(topleft=(20, 85))
+            bg_rect.inflate_ip(10, 4) 
+            
+            s = pygame.Surface((bg_rect.width, bg_rect.height))
+            s.set_alpha(200)
+            s.fill(PRETO)
+            self.tela.blit(s, bg_rect.topleft)
+            
+            self.tela.blit(txt_surf, (20, 85))
 
     def draw_tutorial(self, fase):
         panel_w, panel_h = 700, 420

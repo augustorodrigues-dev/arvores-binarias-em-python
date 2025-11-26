@@ -12,13 +12,10 @@ class AVLTreeAdj:
         self.adj: Dict[int, Tuple[Optional[int], Optional[int]]] = {}
         self.root: Optional[int] = None
         self._next_id: int = 1
-        
         self.anim_cb = animation_callback
 
-    
     def _animate(self, nodes: List[int], msg: str):
         if self.anim_cb:
-            
             valid_nodes = [n for n in nodes if n is not None]
             if valid_nodes:
                 self.anim_cb(valid_nodes, msg)
@@ -50,11 +47,7 @@ class AVLTreeAdj:
     def _rotate_right(self, y: int) -> int:
         x = self._get_left(y)
         if x is None: return y
-        
-        
         self._animate([y, x], f"Rotacionando DIREITA em {self.nodes[y].key}")
-        
-        
         t2 = self._get_right(x)
         self._set_left(y, t2)
         self._set_right(x, y)
@@ -65,11 +58,7 @@ class AVLTreeAdj:
     def _rotate_left(self, x: int) -> int:
         y = self._get_right(x)
         if y is None: return x
-        
-        
         self._animate([x, y], f"Rotacionando ESQUERDA em {self.nodes[x].key}")
-       
-
         t2 = self._get_left(y)
         self._set_right(x, t2)
         self._set_left(y, x)
@@ -82,49 +71,64 @@ class AVLTreeAdj:
         if bf > 1:
             left_id = self._get_left(nid)
             if left_id is not None and self._balance_factor(left_id) < 0:
-                
-                self._animate([nid, left_id], "Desbalanceado. Preparando Rotação Dupla Esq-Dir...")
+                self._animate([nid, left_id], "Rotação Dupla (Esq-Dir)...")
                 self._set_left(nid, self._rotate_left(left_id))
             return self._rotate_right(nid)
         if bf < -1:
             right_id = self._get_right(nid)
             if right_id is not None and self._balance_factor(right_id) > 0:
-                 
-                self._animate([nid, right_id], "Desbalanceado. Preparando Rotação Dupla Dir-Esq...")
+                self._animate([nid, right_id], "Rotação Dupla (Dir-Esq)...")
                 self._set_right(nid, self._rotate_right(right_id))
             return self._rotate_left(nid)
         return nid
 
     def _insert_rec(self, nid: Optional[int], key: int) -> int:
-        if nid is None: return self._new_node(key)
+        if nid is None: 
+            new_id = self._new_node(key)
+            self._animate([new_id], f"Criado nó {key}")
+            return new_id
+        
         node = self.nodes[nid]
-        if key == node.key:
+        
+        if key < node.key:
+            self._animate([nid], f"Inserindo {key}: Menor que {node.key} -> Esquerda")
+            child = self._insert_rec(self._get_left(nid), key)
+            self._set_left(nid, child)
+        elif key > node.key:
+            self._animate([nid], f"Inserindo {key}: Maior que {node.key} -> Direita")
+            child = self._insert_rec(self._get_right(nid), key)
+            self._set_right(nid, child)
+        else:
             node.freq += 1
             self._animate([nid], f"Chave {key} já existe. Frequência++")
             return nid
-        elif key < node.key:
-            child = self._insert_rec(self._get_left(nid), key)
-            self._set_left(nid, child)
-        else:
-            child = self._insert_rec(self._get_right(nid), key)
-            self._set_right(nid, child)
-            
+        
+
         self._update_height(nid)
         return self._rebalance(nid)
 
     def insert(self, key: int) -> None:
+        self._animate([], f"Iniciando inserção de vértice {key}")
         self.root = self._insert_rec(self.root, key)
         if self.root:
-             self._animate([self.root], "Inserção concluída. Árvore balanceada.")
+             self._animate([self.root], "Inserção concluída.")
 
-    def search(self, key: int) -> Optional[int]:
+    
+    def search_step_by_step(self, key: int) -> List[int]:
+        path = []
         cur = self.root
         while cur is not None:
+            path.append(cur)
             node = self.nodes[cur]
-            if key == node.key: return cur
-            elif key < node.key: cur = self._get_left(cur)
-            else: cur = self._get_right(cur)
-        return None
+            self._animate([cur], f"Visitando {node.key}...")
+            if key == node.key:
+                self._animate([cur], "Encontrado!")
+                return path
+            elif key < node.key:
+                cur = self._get_left(cur)
+            else:
+                cur = self._get_right(cur)
+        return []
     
     def _min_value_node(self, nid: int) -> int:
         cur = nid
