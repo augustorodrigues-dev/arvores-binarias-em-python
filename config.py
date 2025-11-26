@@ -1,5 +1,3 @@
-import pygame
-
 LARGURA, ALTURA = 1280, 720
 FPS = 60
 RAIO_NO = 22

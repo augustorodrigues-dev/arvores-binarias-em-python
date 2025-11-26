@@ -1,26 +1,28 @@
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Callable
 from avl import AVLTreeAdj
 from rb import RBTreeAdj
 from t234 import Tree234
 from kd import KDTree 
 
 class EstruturaArvore:
-    def __init__(self, tipo: str):
+    # Aceita um callback opcional para animação
+    def __init__(self, tipo: str, animation_callback: Optional[Callable] = None):
         self.tipo = tipo
         if tipo == "AVL":
-            self.tree = AVLTreeAdj()
+            self.tree = AVLTreeAdj(animation_callback)
         elif tipo == "RB":
-            self.tree = RBTreeAdj()
+            self.tree = RBTreeAdj(animation_callback)
         elif tipo == "234":
-            self.tree = Tree234()
+            self.tree = Tree234(animation_callback)
         elif tipo == "KDT": 
-            self.tree = KDTree()
+            self.tree = KDTree(animation_callback)
         else:
             raise ValueError("Tipo desconhecido")
 
     def inserir(self, key: Union[int, Tuple[int, int]]):
         self.tree.insert(key)
 
+    # ... restante dos métodos (remover, buscar, etc.) permanecem iguais ...
     def remover(self, key) -> bool:
         if self.tipo == "AVL":
             self.tree.remove(key)
@@ -40,30 +42,24 @@ class EstruturaArvore:
                 if self.tipo == "KDT":
                      val_node = node.point
                      val_busca = key
-                     if val_node == val_busca:
-                         break
+                     if val_node == val_busca: break
                      axis = node.axis
-                     if val_busca[axis] < val_node[axis]:
-                         cur = self.tree._get_left(cur)
-                     else:
-                         cur = self.tree._get_right(cur)
+                     if val_busca[axis] < val_node[axis]: cur = self.tree._get_left(cur)
+                     else: cur = self.tree._get_right(cur)
                 else:
                     if key == node.key: break
                     elif key < node.key: cur = (self.tree._left(cur) if self.tipo=="RB" else self.tree._get_left(cur))
                     else: cur = (self.tree._right(cur) if self.tipo=="RB" else self.tree._get_right(cur))
         return caminho
     
-    
     def buscar_caminho_234(self, key: int) -> List[int]:
         ids = []
-        if self.tipo != "234" or self.tree.root is None:
-            return ids
+        if self.tipo != "234" or self.tree.root is None: return ids
         def _search(nid: int, key: int):
             node = self.tree.nodes[nid]
             ids.append(nid)
             i = 0
-            while i < len(node.keys) and key > node.keys[i]:
-                i += 1
+            while i < len(node.keys) and key > node.keys[i]: i += 1
             if i < len(node.keys) and key == node.keys[i]: return
             if node.leaf: return
             _search(node.children[i], key)
