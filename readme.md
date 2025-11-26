@@ -66,9 +66,14 @@ Use o teclado e o mouse para controlar a simulação.
 ### Ações de Dados
 | Tecla | Ação | Descrição |
 | :--- | :--- | :--- |
+| `M` | **Misturar** | Aleatoriza os vértices a serem inseridos |
 | `I` | **Inserir** | Adiciona um valor (ou ponto X,Y) aleatório. |
-| `B` | **Buscar** | Realiza a busca visual do nó selecionado. |
+| `A` | **Auto Inserção** | Insere passo a passo os vértices na árvore. |
+| `F` | **Preencher** | Preenche toda a árvore rapidamente. |
+| `B` | **Buscar** | Realiza a busca visual do vértice selecionado. |
 | `X` | **Remover** | Remove o nó selecionado. |
+| `R` | **Reset** | Reseta a árvore. |
+| `ESPAÇO` | **Stop** | Pausa a execução. |
 
 ---
 
