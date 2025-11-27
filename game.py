@@ -1,9 +1,9 @@
 import pygame
 import sys
 import random
-import math
 import time
-from typing import Dict, Optional, Tuple, List, Callable
+import math
+from typing import Dict, Tuple, List
 
 from config import *
 from ui import UIManager
@@ -16,7 +16,7 @@ COR_DESTAQUE_OPERACAO = (255, 165, 0)
 class Jogo:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("Helldivers: Árvores da Super-Terra - Visualizador Avançado")
+        pygame.display.set_caption("Helldivers: RB & 2-3-4 Tree Visualizer")
         self.tela = pygame.display.set_mode((LARGURA, ALTURA))
         self.clock = pygame.time.Clock()
 
@@ -37,10 +37,9 @@ class Jogo:
         self.intro_text = [
             "> Conexão estabelecida.",
             "> Bem-vindo, Helldiver.",
-            "> Controles Avançados Habilitados:",
+            "> Visualizador Especializado:",
+            "> [1] Rubro-Negra | [2] Árvore 2-3-4",
             "> [A] Auto | [F] Turbo | [M] Mix | [R] Reset",
-            "> [I] Inserir | [X] Remover | [B] Buscar",
-            "> [1-6] Selecionar Fase",
             "> Pela Democracia Gerenciada!"
         ]
         self.typed_chars = 0
@@ -52,18 +51,18 @@ class Jogo:
 
         self.msgs: List[str] = []
         self.mostrar_tutorial = True
-        self.selected_id: Optional[int] = None
+        self.selected_id = None
         self.selected_key = None 
         self.path_destacado: List[int] = []
         self.node_positions: Dict[int, Tuple[int, int]] = {}
         
         self.auto_inserindo = False
         self.turbo_mode = False
-        self.fila_normal = list(LISTA_DEMO)
-        self.fila_kd = list(LISTA_DEMO_KD)
+        self.fila = list(LISTA_DEMO)
         self.indice_demo = 0 
 
-        self.estrutura = EstruturaArvore("AVL", self._animar_passo_tree)
+        
+        self.estrutura = EstruturaArvore("RB", self._animar_passo_tree)
         self._carregar_demo_inicial() 
         self.memoria_fases[1] = self.estrutura
 
@@ -91,19 +90,10 @@ class Jogo:
         if len(self.msgs) > 6: self.msgs.pop(0)
         self.msgs.append(texto)
 
-    def _get_fila_atual(self):
-        if self.fase in (4, 5): return self.fila_kd
-        return self.fila_normal
-
-    def _set_fila_atual(self, nova_fila):
-        if self.fase in (4, 5): self.fila_kd = nova_fila
-        else: self.fila_normal = nova_fila
-
     def _carregar_demo_inicial(self):
         self.indice_demo = 0
-        fila = self._get_fila_atual()
-        if fila:
-            prim = fila[0]
+        if self.fila:
+            prim = self.fila[0]
             self.estrutura.inserir(prim)
             self.indice_demo = 1 
             self._say(f"Raiz {prim} inicializada.")
@@ -116,40 +106,25 @@ class Jogo:
         self.selected_id = None
         self.selected_key = None
         self.indice_demo = 0 
+        self.fila = list(LISTA_DEMO)
         
-        if self.fase in (4, 5):
-            self.fila_kd = list(LISTA_DEMO_KD)
-            self.estrutura = EstruturaArvore("KDT", self._animar_passo_tree)
-            if self.fila_kd:
-                self.estrutura.inserir(self.fila_kd[0])
-                self.indice_demo = 1
-            self.memoria_fases['KDT'] = self.estrutura
-        else:
-            self.fila_normal = list(LISTA_DEMO)
-            tipos = {1: "AVL", 2: "RB", 3: "234", 6: "SPLAY"}
-            
-            if self.fase in tipos:
-                self.estrutura = EstruturaArvore(tipos[self.fase], self._animar_passo_tree)
-                if self.fila_normal:
-                    self.estrutura.inserir(self.fila_normal[0])
-                    self.indice_demo = 1
-                self.memoria_fases[self.fase] = self.estrutura
+        tipos = {1: "RB", 2: "234"}
+        self.estrutura = EstruturaArvore(tipos[self.fase], self._animar_passo_tree)
+        self._carregar_demo_inicial()
+        self.memoria_fases[self.fase] = self.estrutura
 
     def _misturar_fila(self):
-        fila = self._get_fila_atual()
-        qtd_restante = len(fila) - self.indice_demo
+        qtd_restante = len(self.fila) - self.indice_demo
         if qtd_restante > 0:
-            if self.fase in (4, 5):
-                novos = [(random.randint(5, 95), random.randint(5, 95)) for _ in range(qtd_restante)]
-            else:
-                novos = [random.randint(1, 99) for _ in range(qtd_restante)]
-            nova_fila = fila[:self.indice_demo] + novos
-            self._set_fila_atual(nova_fila)
+            novos = [random.randint(1, 99) for _ in range(qtd_restante)]
+            self.fila = self.fila[:self.indice_demo] + novos
             self._say(">> NOVOS VALORES GERADOS <<")
         else:
             self._say("Fila acabou.")
 
     def set_fase(self, f: int):
+        if f not in (1, 2): return
+        
         self.fase = f
         self.selected_id = None
         self.selected_key = None
@@ -158,34 +133,18 @@ class Jogo:
         self.auto_inserindo = False 
         self.turbo_mode = False
         
-        if f in (4, 5):
-            if 'KDT' not in self.memoria_fases:
-                nova_kdt = EstruturaArvore("KDT", self._animar_passo_tree)
-                self.estrutura = nova_kdt
-                if self.fila_kd:
-                    nova_kdt.inserir(self.fila_kd[0])
-                    self.indice_demo = 1
-                self.memoria_fases['KDT'] = nova_kdt
-            else:
-                self.estrutura = self.memoria_fases['KDT']
-                self.indice_demo = len(self.estrutura.tree.nodes)
-            
-            vis_nome = "Hierarquia" if f == 4 else "Plano 2D"
-            self._say(f"Fase KD: {vis_nome}")
-            return
-
+        tipos = {1: "RB", 2: "234"}
+        
         if f not in self.memoria_fases:
-            tipos = {1: "AVL", 2: "RB", 3: "234", 6: "SPLAY"}
-            if f in tipos:
-                self.estrutura = EstruturaArvore(tipos[f], self._animar_passo_tree)
-                self.estrutura = self.estrutura
-                if self.fila_normal:
-                    self.estrutura.inserir(self.fila_normal[0])
-                    self.indice_demo = 1
-                self.memoria_fases[f] = self.estrutura 
-                self._say(f"Fase {f} iniciada.")
+            self.estrutura = EstruturaArvore(tipos[f], self._animar_passo_tree)
+            if self.fila:
+                self.estrutura.inserir(self.fila[0])
+                self.indice_demo = 1
+            self.memoria_fases[f] = self.estrutura 
+            self._say(f"Fase {f} iniciada.")
         else:
             self.estrutura = self.memoria_fases[f]
+            # Tenta sincronizar o índice da fila com a árvore recuperada
             self.indice_demo = len(self.estrutura.tree.nodes) if self.estrutura.tree.root else 0
             self._say(f"Fase {f} recuperada.")
 
@@ -204,10 +163,6 @@ class Jogo:
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_1: self.set_fase(1)
                 elif ev.key == pygame.K_2: self.set_fase(2)
-                elif ev.key == pygame.K_3: self.set_fase(3)
-                elif ev.key == pygame.K_4: self.set_fase(4)
-                elif ev.key == pygame.K_5: self.set_fase(5)
-                elif ev.key == pygame.K_6: self.set_fase(6)
                 elif ev.key == pygame.K_t: self.mostrar_tutorial = True
                 elif ev.key == pygame.K_i: self._acao_inserir_manual()
                 elif ev.key == pygame.K_x: self._acao_remover()
@@ -215,11 +170,11 @@ class Jogo:
                 elif ev.key == pygame.K_a: 
                     self.auto_inserindo = True
                     self.turbo_mode = False
-                    self._say(">> AUTO-INSERÇÃO (LENTA) <<")
+                    self._say(">> AUTO-INSERÇÃO <<")
                 elif ev.key == pygame.K_f:
                     self.auto_inserindo = True
                     self.turbo_mode = True 
-                    self._say(">> PREENCHIMENTO RÁPIDO <<")
+                    self._say(">> MODO TURBO <<")
                 elif ev.key == pygame.K_SPACE:
                     self.auto_inserindo = False
                     self.turbo_mode = False
@@ -231,30 +186,26 @@ class Jogo:
                 self._clique(ev.pos)
 
     def _acao_inserir_manual(self):
-        fila = self._get_fila_atual()
-        if self.indice_demo < len(fila):
-            val = fila[self.indice_demo]
+        if self.indice_demo < len(self.fila):
+            val = self.fila[self.indice_demo]
             self.estrutura.inserir(val)
             self.indice_demo += 1 
             self.path_destacado = []
         else:
-            if self.fase in (4, 5): v = (random.randint(5, 95), random.randint(5, 95))
-            else: v = random.randint(1, 99)
+            v = random.randint(1, 99)
             self.estrutura.inserir(v)
             self._say(f"Extra: {v}")
             self.path_destacado = []
 
     def _processar_auto_insercao(self):
         if not self.auto_inserindo: return
-        fila = self._get_fila_atual()
-        
-        if self.indice_demo >= len(fila):
+        if self.indice_demo >= len(self.fila):
             self.auto_inserindo = False
             self.turbo_mode = False
             self._say("Fila concluída.")
             return
         
-        val = fila[self.indice_demo]
+        val = self.fila[self.indice_demo]
         self.estrutura.inserir(val)
         self.indice_demo += 1
 
@@ -280,8 +231,8 @@ class Jogo:
     def _clique(self, pos):
         x, y = pos
         self._atualizar_layout()
-        if self.fase == 3:
-            for nid, (nx, ny) in self.node_positions.items():
+        if self.fase == 2: # 2-3-4
+            for nid, (nx, ny) in self.node_positions_234.items():
                 rect = pygame.Rect(nx - 25, ny - 15, 50, 30)
                 if rect.collidepoint(x, y):
                     node = self.estrutura.tree.nodes[nid]
@@ -290,14 +241,15 @@ class Jogo:
                         self.path_destacado = []; self._say(f"Sel: {node.keys[0]}")
                     return
             return
+        
+        # RB (Fase 1)
         alvo = None; menor = 999999
         for nid, (nx, ny) in self.node_positions.items():
             d = math.hypot(nx - x, ny - y)
-            raio = RAIO_NO + 5 if self.fase != 5 else 15 
-            if d <= raio and d < menor: menor = d; alvo = nid
+            if d <= RAIO_NO + 5 and d < menor: menor = d; alvo = nid
         if alvo is not None:
             self.selected_id = alvo
-            self.selected_key = self.estrutura.tree.nodes[alvo].point if self.fase in (4,5) else self.estrutura.tree.nodes[alvo].key
+            self.selected_key = self.estrutura.tree.nodes[alvo].key
             self._say(f"Selecionado: {self.selected_key}")
             self.path_destacado = []
 
@@ -313,54 +265,23 @@ class Jogo:
             self.node_positions = {}
             return
 
-        if self.fase in (1, 2, 4, 6):
-            self.node_positions = layout.calcular_layout_binario(self.estrutura.tree, self.estrutura.tree.root, self.fase)
-        elif self.fase == 5:
-            self.node_positions = layout.calcular_layout_kd_espacial(self.estrutura.tree, self.estrutura.tree.root)
-        elif self.fase == 3:
+        if self.fase == 1:
+            self.node_positions = layout.calcular_layout_binario(self.estrutura.tree, self.estrutura.tree.root)
+        elif self.fase == 2:
             self.node_positions = layout.calcular_layout_234(self.estrutura.tree, self.estrutura.tree.root)
-
-    def _draw_kdtree_lines(self, nid, x_min, y_min, x_max, y_max):
-        if nid is None: return
-        node = self.estrutura.tree.nodes[nid]
-        MARGEM_X = 250; MARGEM_Y = 150
-        L_UTIL = LARGURA - 2 * MARGEM_X; A_UTIL = ALTURA - MARGEM_Y - 50
-        OFFSET_X = MARGEM_X; OFFSET_Y = 130
-        def to_screen(vx, vy): return (OFFSET_X + (vx / 100) * L_UTIL, OFFSET_Y + (vy / 100) * A_UTIL)
-        px, py = node.point
-        sx, sy = to_screen(px, py)
-        s_xmin, s_ymin = to_screen(x_min, y_min); s_xmax, s_ymax = to_screen(x_max, y_max)
-        axis = node.axis; cor = COR_EIXO_X if axis == 0 else COR_EIXO_Y
-        if axis == 0: 
-            pygame.draw.line(self.tela, cor, (sx, s_ymin), (sx, s_ymax), 2)
-            self._draw_kdtree_lines(self.estrutura.tree.adj[nid][0], x_min, y_min, px, y_max)
-            self._draw_kdtree_lines(self.estrutura.tree.adj[nid][1], px, y_min, x_max, y_max)
-        else:
-            pygame.draw.line(self.tela, cor, (s_xmin, sy), (s_xmax, sy), 2)
-            self._draw_kdtree_lines(self.estrutura.tree.adj[nid][0], x_min, y_min, x_max, py)
-            self._draw_kdtree_lines(self.estrutura.tree.adj[nid][1], x_min, py, x_max, y_max)
 
     def _draw_lista_demo(self):
         y_pos = ALTURA - 30; start_x = 20
         self.ui._draw_text("FILA:", start_x, y_pos - 5, font=self.fonte_pequena, color=AMARELO)
         start_x += 40
-        
-        fila = self._get_fila_atual()
-        
-        for i, num in enumerate(fila):
+        for i, num in enumerate(self.fila):
             color = VERDE if i < self.indice_demo else CINZA_CLARO
-            
             if i == self.indice_demo: 
                 color = BRANCO
-                txt_w = 45 if self.fase in (4, 5) else 20
-                rect = pygame.Rect(start_x - 3, y_pos - 8, txt_w + 6, 22)
+                rect = pygame.Rect(start_x - 3, y_pos - 8, 26, 22)
                 pygame.draw.rect(self.tela, COR_DESTAQUE_OPERACAO, rect, 2)
-            
-            txt = f"{num}" if self.fase in (4, 5) else str(num)
-            spacing = 55 if self.fase in (4, 5) else 28
-
-            self.ui._draw_text(txt, start_x, y_pos - 5, font=self.fonte_pequena, color=color)
-            start_x += spacing
+            self.ui._draw_text(str(num), start_x, y_pos - 5, font=self.fonte_pequena, color=color)
+            start_x += 28
 
     def draw(self):
         if self.background: self.tela.blit(self.background, (0, 0))
@@ -370,55 +291,31 @@ class Jogo:
         
         self._atualizar_layout()
         
-        # --- DRAW DA ÁRVORE ---
-        if self.fase == 5:
-            MARGEM_X = 250; MARGEM_Y = 150
-            L_UTIL = LARGURA - 2 * MARGEM_X; A_UTIL = ALTURA - MARGEM_Y - 50
-            rect_fundo = pygame.Rect(MARGEM_X, 130, L_UTIL, A_UTIL)
-            s = pygame.Surface((rect_fundo.width, rect_fundo.height)); s.set_alpha(150); s.fill(COR_PLANO_FUNDO)
-            self.tela.blit(s, rect_fundo.topleft); pygame.draw.rect(self.tela, CINZA, rect_fundo, 2)
-            self._draw_kdtree_lines(self.estrutura.tree.root, 0, 0, 100, 100)
+        # --- DRAW RB ---
+        if self.fase == 1:
             for nid, (x, y) in self.node_positions.items():
-                if nid in self.path_destacado: pygame.draw.circle(self.tela, AMARELO, (x, y), 8)
-                pygame.draw.circle(self.tela, BRANCO, (x, y), 4)
-                if self.selected_id == nid: pygame.draw.circle(self.tela, VERDE, (x, y), 8, 2)
-                node = self.estrutura.tree.nodes[nid]
-                txt = f"{node.point[0]},{node.point[1]}"
-                cor = BRANCO if (nid == self.selected_id or nid in self.path_destacado) else CINZA_CLARO
-                self.ui._draw_text(txt, x, y - 12, center_x=True, font=self.fonte_pequena, color=cor)
-        
-        elif self.fase in (1, 2, 4, 6):
-            for nid, (x, y) in self.node_positions.items():
-                if self.fase == 2: l, r = self.estrutura.tree._left(nid), self.estrutura.tree._right(nid)
-                else:
-                    l = self.estrutura.tree._get_left(nid)
-                    r = self.estrutura.tree._get_right(nid)
+                l = self.estrutura.tree._left(nid)
+                r = self.estrutura.tree._right(nid)
                 for child in (l, r):
                     if child and child in self.node_positions:
                         cx, cy = self.node_positions[child]
                         pygame.draw.line(self.tela, CINZA_CLARO, (x, y), (cx, cy), 2)
             for nid, (x, y) in self.node_positions.items():
                 node = self.estrutura.tree.nodes[nid]
-                cor = AZUL 
-                if self.fase == 2: cor = VERMELHO if node.color == RBColor.RED else PRETO
-                elif self.fase == 4: 
-                    if hasattr(node, 'axis'): cor = COR_EIXO_X if node.axis == 0 else COR_EIXO_Y
-                elif self.fase == 6: cor = AZUL
+                cor = VERMELHO if node.color == RBColor.RED else PRETO
                 
                 if nid in self.animating_nodes: pygame.draw.circle(self.tela, COR_DESTAQUE_OPERACAO, (x, y), RAIO_NO + 8)
                 if nid in self.path_destacado: pygame.draw.circle(self.tela, AMARELO, (x, y), RAIO_NO + 4)
                 pygame.draw.circle(self.tela, cor, (x, y), RAIO_NO)
                 pygame.draw.circle(self.tela, BRANCO, (x, y), RAIO_NO, 2)
                 if self.selected_id == nid: pygame.draw.circle(self.tela, VERDE, (x, y), RAIO_NO + 6, 2)
-                if self.fase == 4:
-                    txt = f"{node.point[0]},{node.point[1]}"
-                    self.ui._draw_text(txt, x, y - 6, center_x=True, font=self.fonte_pequena)
-                else:
-                    txt = str(node.key)
-                    if getattr(node, 'freq', 1) > 1: txt += f"({node.freq})"
-                    self.ui._draw_text(txt, x, y - 6, center_x=True)
+                
+                txt = str(node.key)
+                if getattr(node, 'freq', 1) > 1: txt += f"({node.freq})"
+                self.ui._draw_text(txt, x, y - 6, center_x=True)
         
-        elif self.fase == 3:
+        # --- DRAW 2-3-4 ---
+        elif self.fase == 2:
             for nid, (x, y) in self.node_positions.items():
                 node = self.estrutura.tree.nodes[nid]
                 if not node.leaf and node.children:

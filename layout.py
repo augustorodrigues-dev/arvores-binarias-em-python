@@ -1,8 +1,8 @@
 from typing import Dict, Tuple, Optional
 from config import LARGURA, ALTURA
 
-def calcular_layout_binario(tree, root_id: int, fase: int) -> Dict[int, Tuple[int, int]]:
-    """Calcula posições para AVL, RB, Splay e KD-Tree (Visão Hierárquica)"""
+def calcular_layout_binario(tree, root_id: int) -> Dict[int, Tuple[int, int]]:
+    """Calcula posições para Árvores Binárias (Rubro-Negra)"""
     positions = {}
     if root_id is None: 
         return positions
@@ -15,46 +15,19 @@ def calcular_layout_binario(tree, root_id: int, fase: int) -> Dict[int, Tuple[in
         y = 120 + depth * 80
         positions[nid] = (x, y)
         
-        # Abstração para pegar filhos
-        if hasattr(tree, '_get_left'): # AVL, KD, Splay
-            l = tree._get_left(nid)
-            r = tree._get_right(nid)
-        else: # RB (usa nomenclatura _left / _right)
+        # Rubro-Negra usa _left/_right
+        if hasattr(tree, '_left'):
             l = tree._left(nid)
             r = tree._right(nid)
+        else:
+            # Fallback caso use outra interface no futuro
+            l = getattr(tree, '_get_left', lambda x: None)(nid)
+            r = getattr(tree, '_get_right', lambda x: None)(nid)
 
         if l is not None: _recursive(l, depth + 1, x_min, x - 40)
         if r is not None: _recursive(r, depth + 1, x + 40, x_max)
 
     _recursive(root_id, 0, 50, LARGURA - 50)
-    return positions
-
-def calcular_layout_kd_espacial(tree, root_id: int) -> Dict[int, Tuple[int, int]]:
-    """Calcula posições para KD-Tree (Visão 2D - Fase 5)"""
-    positions = {}
-    if root_id is None: 
-        return positions
-
-    MARGEM_X = 250
-    MARGEM_Y = 150
-    L_UTIL = LARGURA - 2 * MARGEM_X
-    A_UTIL = ALTURA - MARGEM_Y - 50
-    OFFSET_X = MARGEM_X
-    OFFSET_Y = 130
-
-    def _recursive(nid):
-        if nid is None: return
-        node = tree.nodes[nid]
-        px, py = node.point
-        
-        sx = OFFSET_X + (px / 100) * L_UTIL
-        sy = OFFSET_Y + (py / 100) * A_UTIL
-        positions[nid] = (int(sx), int(sy))
-        
-        _recursive(tree.adj[nid][0]) # Esquerda
-        _recursive(tree.adj[nid][1]) # Direita
-
-    _recursive(root_id)
     return positions
 
 def calcular_layout_234(tree, root_id: int) -> Dict[int, Tuple[int, int]]:
