@@ -15,12 +15,12 @@ def calcular_layout_binario(tree, root_id: int) -> Dict[int, Tuple[int, int]]:
         y = 120 + depth * 80
         positions[nid] = (x, y)
         
-        # Rubro-Negra usa _left/_right
+        
         if hasattr(tree, '_left'):
             l = tree._left(nid)
             r = tree._right(nid)
         else:
-            # Fallback caso use outra interface no futuro
+            
             l = getattr(tree, '_get_left', lambda x: None)(nid)
             r = getattr(tree, '_get_right', lambda x: None)(nid)
 
