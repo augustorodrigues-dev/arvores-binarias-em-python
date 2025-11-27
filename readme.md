@@ -17,13 +17,8 @@ Um visualizador interativo e gamificado de Estruturas de Dados Avançadas, desen
 * **Arquitetura Modular:** Código organizado utilizando padrões de projeto e separação de responsabilidades.
 
 ### Estruturas Suportadas:
-1.  **Árvore AVL:** Balanceamento estrito por altura.
-2.  **Árvore Rubro-Negra (Red-Black):** Balanceamento por regras de cores.
-3.  **Árvore 2-3-4 (B-Tree):** Árvore multi-way (nós com múltiplas chaves).
-4.  **KD-Tree (Hierarquia):** Estrutura lógica de dados multidimensionais.
-5.  **KD-Tree (Espacial):** Visualização geométrica de cortes no plano cartesiano.
-6.  **Splay Tree:** Árvore auto-ajustável que move nós acessados para a raiz.
-
+1.  **Árvore Rubro-Negra (Red-Black):** Balanceamento por regras de cores.
+2.  **Árvore 2-3-4 (B-Tree):** Árvore multi-way (nós com múltiplas chaves).
 ---
 
 ## 🎮 Controles e Comandos
@@ -33,7 +28,7 @@ A interação é feita via teclado e mouse. O sistema possui um **Log de Eventos
 ### Navegação
 | Tecla | Ação |
 | :---: | :--- |
-| `1` a `6` | **Trocar de Fase** (Muda o tipo de árvore) |
+| `1` a `2` | **Trocar de Fase** (Muda o tipo de árvore) |
 | `T` | **Tutorial** (Exibe a ajuda da fase atual) |
 | `ESC` | **Sair** do programa |
 
@@ -57,25 +52,13 @@ A interação é feita via teclado e mouse. O sistema possui um **Log de Eventos
 
 ## 📚 Detalhes das Fases
 
-### 1. Árvore AVL
-Foca no balanceamento rigoroso.
-* **Observe:** As rotações simples e duplas acontecendo sempre que a diferença de altura excede 1.
-
-### 2. Árvore Rubro-Negra
+### 1. Árvore Rubro-Negra
 Foca no balanceamento por cores e propriedades.
 * **Observe:** A recolorização de nós (Tio Vermelho) vs Rotações (Tio Preto).
 
-### 3. Árvore 2-3-4
+### 2. Árvore 2-3-4
 Uma introdução às árvores B (usadas em bancos de dados).
 * **Observe:** O processo de "Split" (divisão), onde um nó cheio empurra a chave mediana para o pai.
-
-### 4 & 5. KD-Tree (k-Dimensional)
-* **Fase 4:** Mostra a árvore binária clássica. Cores indicam o eixo de corte (Vermelho=X, Azul=Y).
-* **Fase 5:** Plota os mesmos pontos em um gráfico 2D. Ótimo para entender algoritmos de vizinhança e computação gráfica.
-
-### 6. Splay Tree 
-Uma árvore que se otimiza baseada no acesso.
-* **Mecânica:** Sempre que você insere ou busca um número, ele é levado para a Raiz através de rotações *Zig*, *Zig-Zig* ou *Zig-Zag*. Ótimo para simular caches.
 
 ---
 
@@ -110,6 +93,6 @@ O projeto foi refatorado para garantir manutenibilidade e separação de conceit
 * **`gerenciamento.py`** (TreeManager): Design Pattern *Facade*. Gerencia a troca dinâmica entre os tipos de árvores.
 * **`config.py`**: Constantes globais (Cores, Resolução, Listas de Dados).
 * **Implementações das Árvores:**
-    * `avl.py`, `rb.py`, `t234.py`, `kd.py`, `splay.py`.
+    * `rb.py`, `t234.py`.
 
 ---

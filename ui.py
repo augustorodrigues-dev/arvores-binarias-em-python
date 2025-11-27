@@ -47,7 +47,9 @@ class UIManager:
                 "--- COMANDOS ---",
                 "[I] Inserir: Divide nós cheios ao descer.",
                 "[B] Buscar: Visualiza o caminho.",
+                "[A] / [F]: Auto-Inserção e Preenchimento Turbo.",
                 "[X] Remover: Tenta remover (Merge/Empréstimo).",
+                "[M] Misturar Fila | [R] Resetar.",
             ]
         }
 
@@ -89,7 +91,7 @@ class UIManager:
         titulo = f"HELLDIVERS: OPERAÇÃO ÁRVORES | FASE {fase}: {fase_nomes.get(fase, 'Desconhecida')}"
         self._draw_text(titulo, 20, 15, font=self.fonte_titulo)
         
-        controles = "[1-2]Fase [A]Auto [F]Turbo [M]Mix [I]Insert [X]Del [B]Busca [R]Reset"
+        controles = "[1-2]Fase [M]Misturar [I]inserir [A]Auto Inserção [F]Preencher [B]Busca [X]Remover [R]Reset [T]Ajuda"
         self._draw_text(controles, 20, 50, color=CINZA_CLARO, font=self.fonte_pequena)
 
         if msgs:

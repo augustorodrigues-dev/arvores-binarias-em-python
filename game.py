@@ -144,7 +144,7 @@ class Jogo:
             self._say(f"Fase {f} iniciada.")
         else:
             self.estrutura = self.memoria_fases[f]
-            # Tenta sincronizar o índice da fila com a árvore recuperada
+            
             self.indice_demo = len(self.estrutura.tree.nodes) if self.estrutura.tree.root else 0
             self._say(f"Fase {f} recuperada.")
 
@@ -231,7 +231,7 @@ class Jogo:
     def _clique(self, pos):
         x, y = pos
         self._atualizar_layout()
-        if self.fase == 2: # 2-3-4
+        if self.fase == 2:
             for nid, (nx, ny) in self.node_positions_234.items():
                 rect = pygame.Rect(nx - 25, ny - 15, 50, 30)
                 if rect.collidepoint(x, y):
@@ -242,7 +242,7 @@ class Jogo:
                     return
             return
         
-        # RB (Fase 1)
+        
         alvo = None; menor = 999999
         for nid, (nx, ny) in self.node_positions.items():
             d = math.hypot(nx - x, ny - y)
@@ -291,7 +291,7 @@ class Jogo:
         
         self._atualizar_layout()
         
-        # --- DRAW RB ---
+        
         if self.fase == 1:
             for nid, (x, y) in self.node_positions.items():
                 l = self.estrutura.tree._left(nid)
@@ -314,7 +314,7 @@ class Jogo:
                 if getattr(node, 'freq', 1) > 1: txt += f"({node.freq})"
                 self.ui._draw_text(txt, x, y - 6, center_x=True)
         
-        # --- DRAW 2-3-4 ---
+       
         elif self.fase == 2:
             for nid, (x, y) in self.node_positions.items():
                 node = self.estrutura.tree.nodes[nid]
